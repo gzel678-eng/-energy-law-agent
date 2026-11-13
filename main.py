@@ -2,6 +2,8 @@ import asyncio
 
 from mistralai import agents
 
+from tools import fetch_page, fetch_pl_act, get_eur_lex_act, web_search
+
 
 INSTRUCTIONS = """# Rola
 Jesteś ekspertem ds. prawa energetycznego Unii Europejskiej i prawa polskiego.
@@ -47,6 +49,17 @@ energetyki, dostarczając precyzyjnych, źródłowych analiz.
 - Nie zmyślasz numerów artykułów ani dat; przy braku pewności mówisz o tym wprost.
 - Odpowiadasz w języku użytkownika, ale nazwy aktów prawnych podajesz
   w oryginale (PL/EN) z tłumaczeniem przy pierwszym użyciu.
+
+# Narzędzia — weryfikacja źródeł
+- Zanim podasz numer CELEX, datę lub status obowiązywania aktu UE, zweryfikuj
+  go narzędziem get_eur_lex_act (oficjalne metadane Publications Office/CELLAR).
+- Numer Dz.U. polskiego aktu (rok, poz.) weryfikuj narzędziem fetch_pl_act
+  (Dziennik Ustaw, ELI).
+- Strony URE, PSE, ENTSO-E, ACER, KE i inne czytaj narzędziem fetch_page;
+  wyszukuj w sieci narzędziem web_search.
+- Jeśli narzędzie zawiedzie albo źródło jest nieosiągalne, powiedz to wprost
+  i oznacz daną jako "stan wymaga weryfikacji" zamiast zgadywać.
+- Podawaj link do źródła przy każdej weryfikacji.
 """
 
 
@@ -55,13 +68,14 @@ agent = agents.Agent(
     name="energy-law-agent",
     description="Ekspert ds. prawa energetycznego UE i Polski (analizy aktów prawnych, orzecznictwa i dokumentów regulacyjnych).",
     instructions=INSTRUCTIONS,
+    tools=[get_eur_lex_act, fetch_pl_act, fetch_page, web_search],
 )
 
 
 async def main() -> None:
     result = await agent.run(
-        "Jakie wymogi w zakresie przyłączenia OZE wynikają z NC RfG i jak zostały "
-        "transponowane w polskim prawie?"
+        "Zweryfikuj w EUR-Lex metadane dyrektywy (UE) 2023/2413 (RED III): pełny "
+        "tytuł, datę dokumentu i termin transpozycji, a następnie podaj link."
     )
     print(result.text)
 
